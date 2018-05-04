@@ -96,12 +96,61 @@ fi
 
 BASH_IT="$(cd "$(dirname "$0")" && pwd)"
 
+if [[ ! -f "$BASH_IT/lib/helpers.bash" ]] && [[ ! -f "$HOME/.bash_it/lib/helpers.bash" ]] && [[ ! -f "/opt/bash_it/lib/helpers.bash" ]]; then
+  echo "No installation found."
+  while ! [ $install ];  do
+    read -e -n 1 -r -p "Would you like to install bash-it global? [y/N] " choice
+    case $choice in
+    [yY])
+      global="true"
+      if ! $(sudo -v >/dev/null 2>&1); then echo "Admin privileges required."; exit 1; fi
+      admin="sudo"
+      target="/opt/bash_it"
+      ;;
+    [nN]|"")
+      target="$HOME/.bash_it"
+      ;;
+    *)
+      echo -e "\033[91mPlease choose y or n.\033[m"
+      ;;
+    esac
+    read -e -n 1 -r -p "Would you like to clone bash-it from custom repository? [y/N] " choice
+    case $choice in
+    [yY])
+      repo="https://github.com/sub77/bash-it"
+      read -e -i "$repo" -p "Custom repository: " input
+      repo="${input:-$repo}"
+      branch="curl_install"
+      read -e -i "$branch" -p "Branch: " input
+      branch="${input:-$branch}"
+      ;;
+    [nN]|"")
+      repo="https://github.com/Bash-it/bash-it"
+      branch="master"
+      ;;
+    *)
+      echo -e "\033[91mPlease choose y or n.\033[m"
+      ;;
+    esac
+      $admin git clone --depth=1 ${repo}.git -b $branch $target
+      if [ $? != 0 ]; then exit 1; fi
+      BASH_IT=$target
+      if [ $global ]; then $admin chown -R $USER $BASH_IT; fi
+      install=true
+      break
+  done
+fi
 case $OSTYPE in
   darwin*)
     CONFIG_FILE=.bash_profile
     ;;
   *)
-    CONFIG_FILE=.bashrc
+    if [ $global ]; then
+      CONFIG_FILE=$(basename $(find /etc -maxdepth 1 -name *bashrc*))
+      HOME="/etc"
+    else
+      CONFIG_FILE=.bashrc
+    fi
     ;;
 esac
 
@@ -131,11 +180,11 @@ if ! [[ $silent ]] && ! [[ $no_modify_config ]]; then
     read -e -n 1 -r -p "Would you like to keep your $CONFIG_FILE and append bash-it templates at the end? [y/N] " choice
     case $choice in
     [yY])
-      test -w "$HOME/$CONFIG_FILE" &&
-      cp -aL "$HOME/$CONFIG_FILE" "$HOME/$CONFIG_FILE.bak" &&
+      $admin test -w "$HOME/$CONFIG_FILE" &&
+      $admin cp -aL "$HOME/$CONFIG_FILE" "$HOME/$CONFIG_FILE.bak" &&
       echo -e "\033[0;32mYour original $CONFIG_FILE has been backed up to $CONFIG_FILE.bak\033[0m"
 
-      (sed "s|{{BASH_IT}}|$BASH_IT|" "$BASH_IT/template/bash_profile.template.bash" | tail -n +2) >> "$HOME/$CONFIG_FILE"
+      (sed "s|{{BASH_IT}}|$BASH_IT|" "$BASH_IT/template/bash_profile.template.bash" | tail -n +2) | $admin tee -a "$HOME/$CONFIG_FILE"
       echo -e "\033[0;32mBash-it template has been added to your $CONFIG_FILE\033[0m"
       break
       ;;
