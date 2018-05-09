@@ -146,6 +146,8 @@ case $OSTYPE in
     ;;
   *)
     if [ $global ]; then
+      USER_SKEL_FILE="/etc/skel/.bashrc"
+      USER_CONFIG_FILE="/home/$USER/.bashrc"
       CONFIG_FILE=$(basename $(find /etc -maxdepth 1 -name *bashrc*))
       HOME="/etc"
     else
@@ -180,10 +182,17 @@ if ! [[ $silent ]] && ! [[ $no_modify_config ]]; then
     read -e -n 1 -r -p "Would you like to keep your $CONFIG_FILE and append bash-it templates at the end? [y/N] " choice
     case $choice in
     [yY])
+      test -w "$USER_CONFIG_FILE" &&
+      cp -aL "$USER_CONFIG_FILE" "$USER_CONFIG_FILE.bak" &&
+      echo -e "\033[0;32mYour original $USER_CONFIG_FILE has been backed up to $USER_CONFIG_FILE.bak\033[0m"
+      (sed "s|{{BASH_IT}}|$BASH_IT|" "$BASH_IT/template/bash_profile_user.template.bash" | tail -n +2) | tee -a "$USER_CONFIG_FILE"
+      $admin test -w "$USER_SKEL_FILE" &&
+      $admin cp -aL "$USER_SKEL_FILE" "$USER_SKEL_FILE.bak" &&
+      echo -e "\033[0;32mYour original $USER_SKEL_FILE has been backed up to $USER_SKEL_FILE.bak\033[0m"
+      (sed "s|{{BASH_IT}}|$BASH_IT|" "$BASH_IT/template/bash_profile_user.template.bash" | tail -n +2) | $admin tee -a "$USER_SKEL_FILE"
       $admin test -w "$HOME/$CONFIG_FILE" &&
       $admin cp -aL "$HOME/$CONFIG_FILE" "$HOME/$CONFIG_FILE.bak" &&
       echo -e "\033[0;32mYour original $CONFIG_FILE has been backed up to $CONFIG_FILE.bak\033[0m"
-
       (sed "s|{{BASH_IT}}|$BASH_IT|" "$BASH_IT/template/bash_profile.template.bash" | tail -n +2) | $admin tee -a "$HOME/$CONFIG_FILE"
       echo -e "\033[0;32mBash-it template has been added to your $CONFIG_FILE\033[0m"
       break

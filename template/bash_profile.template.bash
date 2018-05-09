@@ -5,7 +5,12 @@ export BASH_IT="{{BASH_IT}}"
 
 # Lock and Load a custom theme file
 # location /.bash_it/themes/
-export BASH_IT_THEME='bobby'
+BASH_IT_USER_THEME=$(cat $HOME/.bashrc | grep -w BASH_IT_USER_THEME | awk  -F= '{ print $2 }')
+if [[ $BASH_IT_USER_THEME ]]; then
+  export BASH_IT_THEME=$BASH_IT_USER_THEME
+else
+  export BASH_IT_THEME='bobby'
+fi
 
 # (Advanced): Change this to the name of your remote repo if you
 # cloned bash-it with a remote other than origin such as `bash-it`.
@@ -52,4 +57,6 @@ export SCM_CHECK=true
 # export BASH_IT_RELOAD_LEGACY=1
 
 # Load Bash It
-source "$BASH_IT"/bash_it.sh
+if [[ ! $BASH_IT_USER_THEME == "0" ]]; then
+  source "$BASH_IT"/bash_it.sh
+fi
