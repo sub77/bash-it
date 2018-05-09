@@ -46,7 +46,7 @@ please feel free to read through this page if you're interested in how Bash-it l
 
 ## Installation using curl
 
-1. `curl https://raw.githubusercontent.com/sub77/bash-it/curl_install/install.sh | bash`
+1. `curl -o /tmp/install.sh https://raw.githubusercontent.com/sub77/bash-it/curl_install/install.sh && bash /tmp/install.sh`
 2. choose local or global installation
 
 ### Install Options
