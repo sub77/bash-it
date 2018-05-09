@@ -4,6 +4,11 @@ function __powerline_last_status_prompt {
   [[ "$1" -ne 0 ]] && echo "$(set_color ${LAST_STATUS_THEME_PROMPT_COLOR} -) ${1} ${normal}"
 }
 
+function __powerline_wd_prompt {
+  local wd=$(echo ${PWD##*/} | sed "s|^${USER}|~|")
+  echo "${wd}|${WD_THEME_PROMPT_COLOR}"
+}
+
 function __powerline_right_segment {
   local OLD_IFS="${IFS}"; IFS="|"
   local params=( $1 )
